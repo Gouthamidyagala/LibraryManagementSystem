@@ -1,0 +1,403 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Date;
+
+public class LibraryManagementSystem extends JFrame {
+    
+    private static ArrayList<Book> books = new ArrayList<>();
+    private static ArrayList<Patron> patrons = new ArrayList<>();
+    private static ArrayList<User> users = new ArrayList<>();
+    
+    public LibraryManagementSystem() {
+        setTitle("Library Management System");
+        setSize(400, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        // Adding an example user for demonstration
+        users.add(new User("admin", "password"));
+        
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new GridLayout(6, 1));
+        
+        JButton manageBooksButton = new JButton("Manage Books");
+        JButton managePatronsButton = new JButton("Manage Patrons");
+        JButton borrowingSystemButton = new JButton("Borrow/Return Books");
+        JButton calculateFinesButton = new JButton("Calculate Fines");
+        JButton searchButton = new JButton("Search");
+        JButton generateReportsButton = new JButton("Generate Reports");
+        
+        manageBooksButton.addActionListener(new ManageBooksListener());
+        managePatronsButton.addActionListener(new ManagePatronsListener());
+        borrowingSystemButton.addActionListener(new BorrowingSystemListener());
+        calculateFinesButton.addActionListener(new CalculateFinesListener());
+        searchButton.addActionListener(new SearchListener());
+        generateReportsButton.addActionListener(new GenerateReportsListener());
+        
+        mainPanel.add(manageBooksButton);
+        mainPanel.add(managePatronsButton);
+        mainPanel.add(borrowingSystemButton);
+        mainPanel.add(calculateFinesButton);
+        mainPanel.add(searchButton);
+        mainPanel.add(generateReportsButton);
+        
+        add(mainPanel);
+        
+        setVisible(true);
+    }
+    
+    public static void main(String[] args) {
+        new LibraryManagementSystem();
+    }
+    
+    private static class Book {
+        String title;
+        String author;
+        String genre;
+        boolean isAvailable;
+        
+        Book(String title, String author, String genre) {
+            this.title = title;
+            this.author = author;
+            this.genre = genre;
+            this.isAvailable = true;
+        }
+    }
+    
+    private static class Patron {
+        String name;
+        String contactInfo;
+        ArrayList<BorrowingRecord> borrowingHistory = new ArrayList<>();
+        
+        Patron(String name, String contactInfo) {
+            this.name = name;
+            this.contactInfo = contactInfo;
+        }
+    }
+    
+    private static class BorrowingRecord {
+        Book book;
+        Date borrowDate;
+        Date returnDate;
+        
+        BorrowingRecord(Book book, Date borrowDate) {
+            this.book = book;
+            this.borrowDate = borrowDate;
+        }
+    }
+    
+    private static class User {
+        String username;
+        String password;
+        
+        User(String username, String password) {
+            this.username = username;
+            this.password = password;
+        }
+    }
+    
+    private static class ManageBooksListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JFrame manageBooksFrame = new JFrame("Manage Books");
+            manageBooksFrame.setSize(400, 300);
+            
+            JPanel panel = new JPanel();
+            panel.setLayout(new GridLayout(4, 2));
+            
+            JLabel titleLabel = new JLabel("Title:");
+            JTextField titleText = new JTextField();
+            JLabel authorLabel = new JLabel("Author:");
+            JTextField authorText = new JTextField();
+            JLabel genreLabel = new JLabel("Genre:");
+            JTextField genreText = new JTextField();
+            
+            JButton addButton = new JButton("Add Book");
+            addButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String title = titleText.getText();
+                    String author = authorText.getText();
+                    String genre = genreText.getText();
+                    books.add(new Book(title, author, genre));
+                    JOptionPane.showMessageDialog(manageBooksFrame, "Book added successfully!");
+                }
+            });
+            
+            panel.add(titleLabel);
+            panel.add(titleText);
+            panel.add(authorLabel);
+            panel.add(authorText);
+            panel.add(genreLabel);
+            panel.add(genreText);
+            panel.add(new JLabel());
+            panel.add(addButton);
+            
+            manageBooksFrame.add(panel);
+            manageBooksFrame.setVisible(true);
+        }
+    }
+    
+    private static class ManagePatronsListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JFrame managePatronsFrame = new JFrame("Manage Patrons");
+            managePatronsFrame.setSize(400, 300);
+            
+            JPanel panel = new JPanel();
+            panel.setLayout(new GridLayout(4, 2));
+            
+            JLabel nameLabel = new JLabel("Name:");
+            JTextField nameText = new JTextField();
+            JLabel contactLabel = new JLabel("Contact Info:");
+            JTextField contactText = new JTextField();
+            
+            JButton addButton = new JButton("Add Patron");
+            addButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String name = nameText.getText();
+                    String contact = contactText.getText();
+                    patrons.add(new Patron(name, contact));
+                    JOptionPane.showMessageDialog(managePatronsFrame, "Patron added successfully!");
+                }
+            });
+            
+            panel.add(nameLabel);
+            panel.add(nameText);
+            panel.add(contactLabel);
+            panel.add(contactText);
+            panel.add(new JLabel());
+            panel.add(addButton);
+            
+            managePatronsFrame.add(panel);
+            managePatronsFrame.setVisible(true);
+        }
+    }
+    
+    private static class BorrowingSystemListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            User user = authenticateUser();
+            if (user == null) return;
+
+            JFrame borrowingSystemFrame = new JFrame("Borrow/Return Books");
+            borrowingSystemFrame.setSize(400, 300);
+
+            JPanel panel = new JPanel();
+            panel.setLayout(new GridLayout(3, 2));
+
+            JLabel bookTitleLabel = new JLabel("Book Title:");
+            JTextField bookTitleText = new JTextField();
+
+            JButton borrowButton = new JButton("Borrow Book");
+            borrowButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String bookTitle = bookTitleText.getText();
+                    for (Book book : books) {
+                        if (book.title.equals(bookTitle) && book.isAvailable) {
+                            book.isAvailable = false;
+                            for (Patron patron : patrons) {
+                                if (patron.name.equals(user.username)) {
+                                    patron.borrowingHistory.add(new BorrowingRecord(book, new Date()));
+                                    JOptionPane.showMessageDialog(borrowingSystemFrame, "Book borrowed successfully!");
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    JOptionPane.showMessageDialog(borrowingSystemFrame, "Book not available!");
+                }
+            });
+
+            JButton returnButton = new JButton("Return Book");
+            returnButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String bookTitle = bookTitleText.getText();
+                    for (Patron patron : patrons) {
+                        if (patron.name.equals(user.username)) {
+                            for (BorrowingRecord record : patron.borrowingHistory) {
+                                if (record.book.title.equals(bookTitle) && record.returnDate == null) {
+                                    record.returnDate = new Date();
+                                    record.book.isAvailable = true;
+                                    JOptionPane.showMessageDialog(borrowingSystemFrame, "Book returned successfully!");
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    JOptionPane.showMessageDialog(borrowingSystemFrame, "Book not found in borrowing history!");
+                }
+            });
+
+            panel.add(bookTitleLabel);
+            panel.add(bookTitleText);
+            panel.add(borrowButton);
+            panel.add(returnButton);
+
+            borrowingSystemFrame.add(panel);
+            borrowingSystemFrame.setVisible(true);
+        }
+    }
+    
+    private static class CalculateFinesListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            User user = authenticateUser();
+            if (user == null) return;
+
+            JFrame calculateFinesFrame = new JFrame("Calculate Fines");
+            calculateFinesFrame.setSize(400, 300);
+
+            JTextArea textArea = new JTextArea();
+            double totalFine = 0.0;
+            for (Patron patron : patrons) {
+                if (patron.name.equals(user.username)) {
+                    for (BorrowingRecord record : patron.borrowingHistory) {
+                        if (record.returnDate != null) {
+                            long diff = record.returnDate.getTime() - record.borrowDate.getTime();
+                            long daysOverdue = (diff / (1000 * 60 * 60 * 24)) - 14; // Assuming 14 days borrowing period
+                            if (daysOverdue > 0) {
+                                double fine = daysOverdue * 0.5; // Assuming $0.50 fine per day
+                                totalFine += fine;
+                                textArea.append("Fine for " + record.book.title + ": $" + fine + "\n");
+                            }
+                        }
+                    }
+                }
+            }
+            textArea.append("Total Fine: $" + totalFine + "\n");
+
+            calculateFinesFrame.add(new JScrollPane(textArea));
+            calculateFinesFrame.setVisible(true);
+        }
+    }
+    
+    private static class SearchListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JFrame searchFrame = new JFrame("Search");
+            searchFrame.setSize(400, 300);
+
+            JPanel panel = new JPanel();
+            panel.setLayout(new GridLayout(4, 2));
+
+            JLabel searchTypeLabel = new JLabel("Search Type (Book/Patron):");
+            JTextField searchTypeText = new JTextField();
+            JLabel searchQueryLabel = new JLabel("Search Query:");
+            JTextField searchQueryText = new JTextField();
+
+            JButton searchButton = new JButton("Search");
+            searchButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String searchType = searchTypeText.getText();
+                    String searchQuery = searchQueryText.getText();
+                    JTextArea textArea = new JTextArea();
+
+                    if (searchType.equalsIgnoreCase("Book")) {
+                        for (Book book : books) {
+                            if (book.title.contains(searchQuery) || book.author.contains(searchQuery) || book.genre.contains(searchQuery)) {
+                                textArea.append("Title: " + book.title + ", Author: " + book.author + ", Genre: " + book.genre + ", Available: " + book.isAvailable + "\n");
+                            }
+                        }
+                    } else if (searchType.equalsIgnoreCase("Patron")) {
+                        for (Patron patron : patrons) {
+                            if (patron.name.contains(searchQuery) || patron.contactInfo.contains(searchQuery)) {
+                                textArea.append("Name: " + patron.name + ", Contact: " + patron.contactInfo + "\n");
+                            }
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(searchFrame, "Invalid search type!");
+                        return;
+                    }
+
+                    searchFrame.add(new JScrollPane(textArea));
+                    searchFrame.setVisible(true);
+                }
+            });
+
+            panel.add(searchTypeLabel);
+            panel.add(searchTypeText);
+            panel.add(searchQueryLabel);
+            panel.add(searchQueryText);
+            panel.add(new JLabel());
+            panel.add(searchButton);
+
+            searchFrame.add(panel);
+            searchFrame.setVisible(true);
+        }
+    }
+    
+    private static class GenerateReportsListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JFrame generateReportsFrame = new JFrame("Generate Reports");
+            generateReportsFrame.setSize(400, 300);
+
+            JTextArea textArea = new JTextArea();
+
+            textArea.append("Book Availability:\n");
+            for (Book book : books) {
+                textArea.append("Title: " + book.title + ", Author: " + book.author + ", Genre: " + book.genre + ", Available: " + book.isAvailable + "\n");
+            }
+
+            textArea.append("\nBorrowing History:\n");
+            for (Patron patron : patrons) {
+                textArea.append("Patron: " + patron.name + "\n");
+                for (BorrowingRecord record : patron.borrowingHistory) {
+                    textArea.append("Book: " + record.book.title + ", Borrowed: " + record.borrowDate + ", Returned: " + record.returnDate + "\n");
+                }
+            }
+
+            textArea.append("\nFines:\n");
+            for (Patron patron : patrons) {
+                double totalFine = 0.0;
+                for (BorrowingRecord record : patron.borrowingHistory) {
+                    if (record.returnDate != null) {
+                        long diff = record.returnDate.getTime() - record.borrowDate.getTime();
+                        long daysOverdue = (diff / (1000 * 60 * 60 * 24)) - 14; // Assuming 14 days borrowing period
+                        if (daysOverdue > 0) {
+                            double fine = daysOverdue * 0.5; // Assuming $0.50 fine per day
+                            totalFine += fine;
+                        }
+                    }
+                }
+                if (totalFine > 0) {
+                    textArea.append("Patron: " + patron.name + ", Total Fine: $" + totalFine + "\n");
+                }
+            }
+
+            generateReportsFrame.add(new JScrollPane(textArea));
+            generateReportsFrame.setVisible(true);
+        }
+    }
+    
+    private static User authenticateUser() {
+        JTextField usernameField = new JTextField();
+        JPasswordField passwordField = new JPasswordField();
+        Object[] message = {
+                "Username:", usernameField,
+                "Password:", passwordField
+        };
+
+        int option = JOptionPane.showConfirmDialog(null, message, "Login", JOptionPane.OK_CANCEL_OPTION);
+        if (option == JOptionPane.OK_OPTION) {
+            String username = usernameField.getText();
+            String password = new String(passwordField.getPassword());
+
+            for (User user : users) {
+                if (user.username.equals(username) && user.password.equals(password)) {
+                    return user;
+                }
+            }
+
+            JOptionPane.showMessageDialog(null, "Invalid username or password!");
+        }
+        return null;
+    }
+}
